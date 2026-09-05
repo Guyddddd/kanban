@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>ศูนย์ติดตามงานผู้บริหาร</title>
+  <style>
+    :root {
+      --page: #f7f7f5;
+      --surface: #ffffff;
+      --surface-subtle: #f1f1ee;
+      --ink: #171717;
+      --muted: #747470;
+      --line: #deded9;
+      --shadow: 0 12px 30px rgba(0,0,0,.06);
+      --focus: #171717;
+    }
+    :root[data-theme="dark"] {
+      --page: #151515;
+      --surface: #202020;
+      --surface-subtle: #292929;
+      --ink: #f4f4f1;
+      --muted: #acaca5;
+      --line: #3d3d3a;
+      --shadow: 0 12px 30px rgba(0,0,0,.25);
+      --focus: #f4f4f1;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--page); color: var(--ink); font-family: Arial, Tahoma, sans-serif; transition: background .2s, color .2s; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .shell { max-width: 1560px; margin: 0 auto; padding: 28px clamp(18px, 4vw, 64px) 52px; }
+    header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: clamp(30px, 5vw, 58px); }
+    .eyebrow { margin: 0 0 8px; color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(1.85rem, 4vw, 3.25rem); letter-spacing: -.045em; line-height: 1.05; }
+    .subtitle { max-width: 580px; margin: 14px 0 0; color: var(--muted); font-size: 1rem; line-height: 1.55; }
+    .theme-toggle, .icon-button, .move-button, .text-button, .add-button { border: 1px solid var(--line); color: var(--ink); background: var(--surface); border-radius: 10px; }
+    .theme-toggle { min-height: 42px; padding: 0 14px; white-space: nowrap; font-weight: 700; }
+    .theme-toggle:hover, .icon-button:hover, .move-button:hover, .text-button:hover { background: var(--surface-subtle); }
+    .board { display: grid; grid-template-columns: repeat(4, minmax(230px, 1fr)); gap: 18px; align-items: start; }
+    .column { min-height: 280px; border: 1px solid var(--line); border-radius: 15px; background: color-mix(in srgb, var(--surface) 80%, transparent); padding: 16px; transition: border-color .15s, background .15s; }
+    .column.drop-target { border-color: var(--focus); background: var(--surface); }
+    .column-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 1px 14px; border-bottom: 1px solid var(--line); }
+    .column-title { margin: 0; font-size: 1rem; letter-spacing: -.015em; }
+    .count { display: grid; min-width: 26px; height: 26px; place-items: center; padding: 0 7px; border-radius: 99px; background: var(--surface-subtle); color: var(--muted); font-size: .78rem; font-weight: 700; }
+    .card-list { min-height: 80px; padding: 12px 0 4px; }
+    .task-card { position: relative; margin-bottom: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); box-shadow: 0 2px 5px rgba(0,0,0,.025); }
+    .task-card[draggable="true"] { cursor: grab; }
+    .task-card.dragging { opacity: .42; }
+    .task-card:last-child { margin-bottom: 0; }
+    .card-text { margin: 0 0 15px; overflow-wrap: anywhere; font-size: .98rem; font-weight: 600; line-height: 1.45; }
+    .card-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .card-management, .mobile-moves { display: flex; gap: 6px; }
+    .icon-button { display: grid; width: 32px; height: 32px; place-items: center; padding: 0; font-size: 1rem; }
+    .move-button { display: none; min-width: 44px; min-height: 42px; padding: 0 12px; font-size: 1.1rem; font-weight: 700; }
+    .add-button { width: 100%; min-height: 43px; margin-top: 10px; padding: 0 12px; border-style: dashed; background: transparent; color: var(--muted); font-weight: 700; }
+    .add-button:hover { border-color: var(--ink); color: var(--ink); }
+    .empty { margin: 10px 0; color: var(--muted); font-size: .88rem; line-height: 1.5; text-align: center; }
+    dialog { width: min(92vw, 480px); padding: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+    dialog::backdrop { background: rgba(0,0,0,.42); }
+    .modal { padding: 24px; }
+    .modal h2 { margin: 0 0 17px; font-size: 1.25rem; }
+    .modal label { display: block; margin-bottom: 8px; color: var(--muted); font-size: .88rem; font-weight: 700; }
+    .modal input { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; outline: none; background: var(--page); color: var(--ink); }
+    .modal input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 15%, transparent); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 20px; }
+    .text-button { min-height: 40px; padding: 0 14px; font-weight: 700; }
+    .text-button.primary { border-color: var(--ink); background: var(--ink); color: var(--surface); }
+    .text-button.primary:hover { opacity: .86; }
+    @media (max-width: 900px) { .board { grid-template-columns: repeat(2, minmax(240px, 1fr)); } }
+    @media (max-width: 620px) {
+      .shell { padding: 20px 14px 40px; }
+      header { margin-bottom: 30px; }
+      .subtitle { font-size: .94rem; }
+      .theme-toggle { min-height: 40px; padding: 0 11px; font-size: .88rem; }
+      .board { grid-template-columns: 1fr; gap: 13px; }
+      .column { min-height: auto; padding: 14px; }
+      .move-button { display: grid; place-items: center; }
+      .task-card[draggable="true"] { cursor: default; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">Executive Office</p>
+        <h1>ศูนย์ติดตามงานผู้บริหาร</h1>
+        <p class="subtitle">รวมเรื่องสำคัญ ติดตามผู้รับผิดชอบ และเห็นจุดที่รอการตัดสินใจได้ในหน้าเดียว</p>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="สลับโหมดสี"></button>
+    </header>
+    <section class="board" id="board" aria-label="กระดานติดตามงาน"></section>
+  </main>
+
+  <dialog id="taskDialog">
+    <form class="modal" id="taskForm" method="dialog">
+      <h2 id="dialogTitle">เพิ่มเรื่องใหม่</h2>
+      <label for="taskInput">หัวข้อเรื่อง</label>
+      <input id="taskInput" name="task" maxlength="220" autocomplete="off" required placeholder="เช่น สรุปประเด็นเพื่อเสนอผู้บริหาร">
+      <div class="modal-actions">
+        <button class="text-button" type="button" id="cancelDialog">ยกเลิก</button>
+        <button class="text-button primary" type="submit">บันทึก</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'executive-office-kanban-v1';
+      const THEME_KEY = 'executive-office-theme-v1';
+      // แก้ชื่อคอลัมน์ให้ตรงวิธีทำงานของคุณได้เลยที่รายการนี้
+      const columns = [
+        { id: 'incoming', title: 'เรื่องเข้า' },
+        { id: 'coordinating', title: 'กำลังประสาน' },
+        { id: 'approval', title: 'รออนุมัติ' },
+        { id: 'closed', title: 'ปิดเรื่อง' }
+      ];
+      const board = document.getElementById('board');
+      const dialog = document.getElementById('taskDialog');
+      const form = document.getElementById('taskForm');
+      const input = document.getElementById('taskInput');
+      const dialogTitle = document.getElementById('dialogTitle');
+      const themeToggle = document.getElementById('themeToggle');
+      let selectedColumn = null;
+      let editingCard = null;
+      let draggingCard = null;
+
+      const newId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const load = () => {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          return Array.isArray(saved) ? saved.filter(card => columns.some(column => column.id === card.column) && typeof card.text === 'string') : [];
+        } catch { return []; }
+      };
+      let cards = load();
+      const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+      const columnIndex = id => columns.findIndex(column => column.id === id);
+
+      function makeButton(label, title, className, handler) {
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = className; button.textContent = label; button.title = title; button.setAttribute('aria-label', title);
+        button.addEventListener('click', handler);
+        return button;
+      }
+      function render() {
+        board.replaceChildren();
+        columns.forEach(column => {
+          const columnCards = cards.filter(card => card.column === column.id);
+          const columnEl = document.createElement('section');
+          columnEl.className = 'column'; columnEl.dataset.column = column.id;
+          const head = document.createElement('div'); head.className = 'column-head';
+          const title = document.createElement('h2'); title.className = 'column-title'; title.textContent = column.title;
+          const count = document.createElement('span'); count.className = 'count'; count.textContent = columnCards.length; count.setAttribute('aria-label', `${columnCards.length} รายการ`);
+          head.append(title, count);
+          const list = document.createElement('div'); list.className = 'card-list';
+          if (!columnCards.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = 'ยังไม่มีเรื่องในขั้นตอนนี้'; list.append(empty); }
+          columnCards.forEach(card => list.append(makeCard(card)));
+          const add = makeButton('+ เพิ่มเรื่อง', `เพิ่มเรื่องในคอลัมน์ ${column.title}`, 'add-button', () => openDialog(column.id));
+          columnEl.append(head, list, add);
+          columnEl.addEventListener('dragover', event => { event.preventDefault(); columnEl.classList.add('drop-target'); });
+          columnEl.addEventListener('dragleave', event => { if (!columnEl.contains(event.relatedTarget)) columnEl.classList.remove('drop-target'); });
+          columnEl.addEventListener('drop', event => { event.preventDefault(); columnEl.classList.remove('drop-target'); if (draggingCard) moveCard(draggingCard, column.id); });
+          board.append(columnEl);
+        });
+      }
+      function makeCard(card) {
+        const cardEl = document.createElement('article'); cardEl.className = 'task-card'; cardEl.draggable = true; cardEl.dataset.id = card.id;
+        const text = document.createElement('p'); text.className = 'card-text'; text.textContent = card.text;
+        const actions = document.createElement('div'); actions.className = 'card-actions';
+        const moves = document.createElement('div'); moves.className = 'mobile-moves';
+        const index = columnIndex(card.column);
+        if (index > 0) moves.append(makeButton('←', 'ย้ายไปขั้นตอนก่อนหน้า', 'move-button', () => moveCard(card.id, columns[index - 1].id)));
+        if (index < columns.length - 1) moves.append(makeButton('→', 'ย้ายไปขั้นตอนถัดไป', 'move-button', () => moveCard(card.id, columns[index + 1].id)));
+        const manage = document.createElement('div'); manage.className = 'card-management';
+        manage.append(makeButton('✎', 'แก้ไขเรื่อง', 'icon-button', () => openDialog(card.column, card.id)), makeButton('×', 'ลบเรื่อง', 'icon-button', () => removeCard(card.id)));
+        actions.append(moves, manage); cardEl.append(text, actions);
+        cardEl.addEventListener('dragstart', () => { draggingCard = card.id; cardEl.classList.add('dragging'); });
+        cardEl.addEventListener('dragend', () => { draggingCard = null; cardEl.classList.remove('dragging'); document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target')); });
+        return cardEl;
+      }
+      function openDialog(columnId, cardId = null) {
+        selectedColumn = columnId; editingCard = cardId;
+        const card = cards.find(item => item.id === cardId);
+        dialogTitle.textContent = card ? 'แก้ไขเรื่อง' : 'เพิ่มเรื่องใหม่'; input.value = card ? card.text : '';
+        dialog.showModal(); requestAnimationFrame(() => input.focus());
+      }
+      form.addEventListener('submit', event => {
+        event.preventDefault(); const value = input.value.trim(); if (!value) return;
+        if (editingCard) cards = cards.map(card => card.id === editingCard ? { ...card, text: value } : card);
+        else cards.push({ id: newId(), column: selectedColumn, text: value });
+        save(); render(); dialog.close();
+      });
+      document.getElementById('cancelDialog').addEventListener('click', () => dialog.close());
+      function moveCard(cardId, destination) { cards = cards.map(card => card.id === cardId ? { ...card, column: destination } : card); save(); render(); }
+      function removeCard(cardId) {
+        const card = cards.find(item => item.id === cardId);
+        if (card && confirm(`ลบเรื่อง “${card.text}” ใช่หรือไม่?\nการลบนี้กู้คืนไม่ได้`)) { cards = cards.filter(item => item.id !== cardId); save(); render(); }
+      }
+      function setTheme(theme) { document.documentElement.dataset.theme = theme; localStorage.setItem(THEME_KEY, theme); themeToggle.textContent = theme === 'dark' ? '☀ โหมดสว่าง' : '◐ โหมดมืด'; }
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      setTheme(savedTheme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+      themeToggle.addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+      render();
+    })();
+  </script>
+</body>
+</html>
